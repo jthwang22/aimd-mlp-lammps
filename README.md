@@ -59,7 +59,7 @@ The workflow relies on the following software packages:
 * Installation: [SIESTA Releases](https://gitlab.com/siesta-project/siesta/-/releases)
 * Documentation: [SIESTA Documentation](https://docs.siesta-project.org/projects/siesta/)
 
-### 2. Machine-Learning Potential Development
+### 2. Machine Learning Potential Development
 
 **DeePMD-kit**
 
