@@ -1,0 +1,129 @@
+#General system specifications
+SystemName          Au28S2C10H20 molecule
+SystemLabel         ausc10hs
+NumberOfAtoms       60
+NumberOfSpecies     4
+
+# Species index, atomic number, species label
+%block ChemicalSpeciesLabel
+ 1  79 Au
+ 2  16 S
+ 3   6 C
+ 4   1 H
+%endblock ChemicalSpeciesLabel
+
+#Atomic coordinates
+AtomicCoordinatesFormat  Ang
+%block AtomicCoordinatesAndAtomicSpecies
+22.39088 21.53921 12.07885        1
+25.27488 21.53921 12.07885        1
+28.15888 21.53921 12.07885        1
+22.39088 24.42321 12.07885        1
+25.27488 24.42321 12.07885        1
+28.15888 24.42321 12.07885        1
+22.39088 27.30721 12.07885        1
+25.27488 27.30721 12.07885        1
+28.15888 27.30721 12.07885        1
+28.15668 27.71251 37.77885        1
+25.27328 27.74741 37.82345        1
+22.38978 27.78221 37.86815        1
+28.12388 24.83161 37.90715        1
+25.24048 24.86641 37.95185        1
+22.35698 24.90121 37.99655        1
+28.09108 21.95061 38.03545        1
+25.20768 21.98551 38.08015        1
+22.32418 22.02031 38.12485        1
+23.83288 22.98121 14.11785        1
+26.71688 22.98121 14.11785        1
+23.83288 25.86521 14.11785        1
+26.71688 25.86521 14.11785        1
+25.27488 24.42321 16.15685        1
+25.17518 24.68571 33.87835        1
+26.66588 26.19911 35.82855        1
+23.78248 26.23391 35.87325        1
+26.63308 23.31821 35.95695        1
+23.74968 23.35301 36.00165        1
+25.30278 25.28831 17.84285        2
+25.24098 24.09841 32.17445        2
+25.24208 24.22241 19.31235        3
+25.24268 25.06481 20.58425        3
+25.25428 24.18101 21.83475        3
+25.20868 25.03141 23.10515        3
+25.26288 24.16881 24.36665        3
+25.19158 25.03581 25.62505        3
+25.25828 24.18911 26.89645        3
+25.16998 25.06451 28.14805        3
+25.24208 24.22241 29.42425        3
+25.13348 25.10311 30.66585        3
+24.33768 23.60791 19.25845        4
+26.10868 23.55431 19.28905        4
+26.12288 25.72001 20.60315        4
+24.35478 25.70921 20.60625        4
+24.39378 23.50111 21.81625        4
+26.15838 23.56031 21.83695        4
+26.05118 25.73381 23.10715        4
+24.28968 25.63021 23.10965        4
+24.42978 23.45541 24.36305        4
+26.19068 23.58401 24.37315        4
+24.25978 25.61431 25.61815        4
+26.01878 25.75641 25.62155        4
+24.43708 23.46201 26.89785        4
+26.19538 23.61961 26.91035        4
+24.23078 25.63081 28.13405        4
+25.98808 25.79521 28.14415        4
+24.43028 23.48411 29.41455        4
+26.18918 23.66841 29.43605        4
+24.18018 25.64121 30.67495        4
+25.94038 25.84271 30.68605        4
+%endblock AtomicCoordinatesAndAtomicSpecies
+
+#Unit cell for the calculation
+LatticeConstant 50 Ang
+%block LatticeVectors
+  1.000 0.000 0.000
+  0.000 1.000 0.000
+  0.000 0.000 1.000
+%endblock LatticeVectors
+
+# Geometry constraints
+%block Geometry.Constraints
+  position from 1 to 18
+%endblock Geometry.Constraints
+
+# Basis set definition
+PAO.EnergyShift 250 meV
+PAO.SplitNorm   0.15
+PAO.BasisSize   DZP
+
+# Exchange-Correlation functional
+XC.Functional GGA
+XC.Authors    PBE
+
+#Real space grid
+MeshCutoff 125.0 Ry
+
+# Convergence of SCF
+DM.MixingWeight 0.02
+DM.NumberPulay  2
+
+ElectronicTemperature 800 K
+
+# MD
+MD.TypeOfRun          Nose
+MD.InitialTimeStep    1
+MD.FinalTimeStep      4001
+MD.LengthTimeStep           0.5 fs
+MD.InitialTemperature   100.0 K
+MD.TargetTemperature    100.0 K
+MD.NoseMass             1 Ry*fs**2
+
+# Restart
+DM.UseSaveDM F
+MD.UseSaveXV F
+
+# Write
+WriteMDHistory T
+WriteMDXmol T
+WriteForces T
+WriteCoorStep T
+WriteCoorXmol T
