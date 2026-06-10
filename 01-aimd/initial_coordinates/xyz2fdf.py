@@ -1,6 +1,7 @@
+#!/usr/bin/env python3
 """
 Read an XYZ file, reorder atoms according to atom type and z-coordinate,
-and print the resulting coordinates.
+and print the resulting coordinates in the SIESTA input file format.
 
 This script assumes a molecular junction structure with geometrically constrained electrode atoms.
 

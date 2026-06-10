@@ -1,0 +1,123 @@
+# ==================================================================
+# LAMMPS Input for Thermal Transport NEMD using Langevin Thermostats
+# Minimization -> NVT Equilibration -> NVE Production
+# ==================================================================
+
+# ---- VARIABLES ----
+
+variable seed   equal 12345
+
+variable T_run  equal 300.0
+variable Thot   equal 325.0
+variable Tcold  equal 275.0
+
+variable dt     equal 0.001
+
+# ---- SYSTEM ----
+
+units       metal
+atom_style  atomic
+boundary    p p p
+
+read_data   AuSC10HS_coord.dat
+
+restart 100000 AuSC10HS.restart1 AuSC10HS.restart2
+
+# ---- GROUPS ----
+
+group fixed  type 1
+group heater type 2
+group cooler type 3
+group bath   type 2 3
+group chain  type 4 5 6
+group move   type 2 3 4 5 6
+
+neighbor        1.0 bin
+neigh_modify    every 1 check yes
+
+# ---- POTENTIAL ----
+
+pair_style deepmd dp_AuSC10HS_M1.pb
+pair_coeff * * Au Au Au S C H
+
+# ---- COMPUTES ----
+
+compute hTemp heater temp
+compute cTemp cooler temp
+compute bTemp bath   temp
+compute mTemp chain  temp
+compute sTemp move   temp
+
+# ==========================================================
+# STAGE 1 : ENERGY MINIMIZATION
+# ==========================================================
+
+log AuSC10HS_min.log
+
+# Fix boundary electrode layers in place
+fix hold fixed setforce 0 0 0
+
+thermo 100
+thermo_style custom step pe ke etotal press
+
+min_style cg
+minimize 1e-8 1e-8 10000 100000
+
+# ==========================================================
+# STAGE 2 : NVT EQUILIBRATION
+# ==========================================================
+
+reset_timestep 0
+
+# Generate initial velocities
+velocity move create ${T_run} ${seed} rot yes mom yes dist gaussian
+
+# NVT
+fix nvtrun move nvt temp ${T_run} ${T_run} $(100*dt)
+
+thermo_style custom step temp c_bTemp c_mTemp press etotal pe ke vol
+thermo 1000
+
+# NVT movie
+dump nvtxyz all xyz 1000 AuSC10HS_nvt.xyz
+dump_modify nvtxyz element Au Au Au S C H
+
+timestep ${dt}
+
+run 1000000
+
+write_restart AuSC10HS_nvt.restart
+
+undump nvtxyz
+unfix nvtrun
+
+# ==========================================================
+# STAGE 3 : NVE + LANGEVIN
+# ==========================================================
+
+reset_timestep 0
+
+# NVE
+fix nverun move nve
+
+# Langevin thermostats
+fix hot  heater langevin ${Thot}  ${Thot}  0.04 123  tally yes
+fix cold cooler langevin ${Tcold} ${Tcold} 0.04 1234 tally yes
+
+# Temperature difference
+fix tempave all ave/time 100 100 10000 c_hTemp c_cTemp file reservoir_temps.dat
+
+thermo_style custom step c_hTemp c_cTemp c_bTemp c_mTemp c_sTemp f_hot f_cold
+thermo 1000
+
+# NVE movie
+dump nvexyz all xyz 1000 AuSC10HS_nve.xyz
+dump_modify nvexyz element Au Au Au S C H
+
+# Kinetic energies for plotting temperature profile
+compute cke all ke/atom
+dump kedump all custom 1000 AuSC10HS_ke.dump id type c_cke
+
+run 5000000
+
+write_restart AuSC10HS_final.restart

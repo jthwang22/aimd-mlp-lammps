@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Process multiple SIESTA AIMD trajectories into a single output to be read by dpdata for DeePMD-kit training data.
 
