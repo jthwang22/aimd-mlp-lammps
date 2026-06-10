@@ -48,6 +48,10 @@ The workflow relies on the following software packages:
 * Python 3.x (for data processing)
 * SLURM-enabled HPC environment
 
+Other useful software:
+
+* [Avogadro](https://avogadro.cc/index.html) (for editing of atomic coordinates)
+* [OVITO](https://www.ovito.org/) (for visualization)
 ---
 
 ## Software Specifications
