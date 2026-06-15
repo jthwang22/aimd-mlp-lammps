@@ -10,7 +10,7 @@ Coordinates in the XYZ format must be converted if placed into SIESTA input scri
 
 ## SIESTA
 
-The SIESTA input script (ausc10hs.fdf) contains all information to control AIMD simulation. Information includes atomic species and coordinates, simulation cell size, basis set, SCF convergence parameters, MD controls, and more.
+The SIESTA input script (ausc10hs.fdf) contains all information to control AIMD simulation. Information includes atomic species and coordinates, geometry constraints, simulation cell size, basis set, SCF convergence parameters, MD controls, and more.
 
 [Pseudopotentials](https://siesta-project.org/siesta/Documentation/Pseudopotentials/) are required for each element present in the simulated system. Included here are pseudopotentials designed for the PBE functional method.
 

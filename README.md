@@ -46,6 +46,7 @@ The workflow relies on the following software packages:
 * DeePMD-kit
 * LAMMPS
 * Python 3.x (for data processing)
+    * dpdata package
 * SLURM-enabled HPC environment
 
 Other useful software:
@@ -68,6 +69,7 @@ Other useful software:
 **DeePMD-kit**
 
 * Documentation: [DeePMD-kit Documentation](https://docs.deepmodeling.com/projects/deepmd/en/latest/)
+* Use of dpdata package: [dpdata Documentation](https://docs.deepmodeling.com/projects/dpdata/en/stable/index.html)
 
 ### 3. Classical Molecular Dynamics
 
@@ -89,6 +91,7 @@ This repository contains example files and templates for:
 * DeePMD-kit training script
 * LAMMPS simulation inputs
 * SLURM job submission scripts
+* Sample outputs from ML training and LAMMPS simulations
 
 ---
 
