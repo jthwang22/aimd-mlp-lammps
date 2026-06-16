@@ -16,4 +16,8 @@ The next step is to split the dataset into training data and validation data. Th
 
 ## Machine learning training
 
-The input.json script contains all information to begin the ML training. Example SLURM job script is included. Default command in terminal: dp train input.json
+The input.json script contains all information to begin the ML training. Example SLURM job script is included.
+
+Default command in terminal: dp train input.json
+
+Further training details and procedure can be found in the documentation and the tutorials. After training, the model is frozen and compressed to a .pb format for use in production MD simulations.

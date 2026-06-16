@@ -3,11 +3,14 @@
 Read an XYZ file, reorder atoms according to atom type and z-coordinate,
 and writes the separated coordinate file to be read by LAMMPS input script.
 
-This script assumes a molecular junction structure with geometrically constrained electrode atoms.
-In the LAMMPS input script, multiple atom types for the electrode atoms are used to differentiate regions for thermostatting.
+This script assumes a molecular junction structure with geometrically constrained electrode atoms in the outermost layers.
+Molecule elements and their masses are hard coded. Need modification if a different molecule is in the junction.
+
+In the LAMMPS input script, the multiple atom types for the electrode atoms (1-3) are used 
+to differentiate fixed regions and regions for thermostatting.
 
 Usage:
-    python xyz2lmp.py AuSC10HS.xyz --box 50 50 50 -o junction.dat
+    python xyz2lmp.py AuSC10HS.xyz --box 50 50 50 -o AuSC10HS_coord.dat
 
 """
 
@@ -108,7 +111,9 @@ def write_lammps(
         f.write("# coordinate file\n\n")
 
         f.write(f"{len(molecule)} atoms\n")
-        f.write("6 atom types\n\n")
+        
+        n_types = molecule["Type"].nunique()
+        f.write(f"{n_types} atom types\n\n")
 
         f.write(f"0.000000 {lx:.6f} xlo xhi\n")
         f.write(f"0.000000 {ly:.6f} ylo yhi\n")

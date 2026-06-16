@@ -28,9 +28,15 @@ The workflow is designed for execution on HPC clusters, and example SLURM job sc
 
 ```text
 .
-├── aimd/
-├── deepmd_training/
-├── lammps/
+├───01-aimd/
+│   ├───initial_coordinates/
+│   └───siesta/
+│       └───pseudopotentials/
+├───02-mlp/
+│   ├───data_preparation/
+│   ├───deepmd_train/
+│   └───model_validation/
+├───03-lammps/
 └── README.md
 ```
 
@@ -97,13 +103,13 @@ This repository contains example files and templates for:
 
 ## Example Results
 
-### Machine-Learning Potential Validation
+### Machine Learning Potential Model Validation
 
-
+![Model Validation](02-mlp/model_validation/validation.png)
 
 ### Molecular Dynamics Simulations of Thermal Transport
 
-
+![Simulation Movie](03-lammps/AuSC10HS_nve.gif)
 
 ---
 
