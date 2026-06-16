@@ -1,4 +1,4 @@
-# 01. SIESTA Ab initio molecular dynamics
+# 01. SIESTA Ab initio molecular dynamics simulation
 
 The first procedure is to obtain accurate quantum data to train machine learning interatomic potentials. One method of doing so is by gathering trajectories from ab initio molecular dynamics (AIMD), where energies and forces of the system are calculated with their electronic structure. AIMD is carried out here by the SIESTA software program.
 
