@@ -105,10 +105,12 @@ This repository contains example files and templates for:
 
 ### Machine Learning Potential Model Validation
 
+Loss curves and predictions on validation data
 ![Model Validation](02-mlp/model_validation/validation.png)
 
 ### Molecular Dynamics Simulations of Thermal Transport
 
+Sample production simulation movie
 ![Simulation Movie](03-lammps/AuSC10HS_nve.gif)
 
 ---
