@@ -80,7 +80,7 @@ def main() -> None:
     n_frames = len(data)
     print(f"# the data contains {n_frames} frames")
 
-    n_val = int(n_frames * args.val_fraction)
+    n_val = int(n_frames * args.val_frac)
 
     val_indices = np.random.choice(
         n_frames,
