@@ -115,6 +115,14 @@ Sample production simulation movie
 
 ---
 
+## Future Work
+
+1. Configure input scripts and job submission scripts to allow for submission of multiple parallel runs with varying conditions at once
+
+2. Interface with active learning using [DP-GEN](https://docs.deepmodeling.com/projects/dpgen/en/latest/index.html)
+
+---
+
 ## Author Contributions
 
 This repository was developed to document the workflow from AIMD trajectory generation through machine learning potential training and deployment in LAMMPS MD simulations.

@@ -48,11 +48,12 @@ compute bTemp bath   temp
 compute mTemp chain  temp
 compute sTemp move   temp
 
+# Main log output for simulation
+log AuSC10HS.log
+
 # ==========================================================
 # STAGE 1 : ENERGY MINIMIZATION
 # ==========================================================
-
-log AuSC10HS_min.log
 
 # Fix boundary electrode layers in place
 fix hold fixed setforce 0 0 0
