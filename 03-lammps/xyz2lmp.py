@@ -93,6 +93,7 @@ def read_xyz(xyz_file: Path) -> pd.DataFrame:
     ] = 3
 
     molecule = molecule[["Type", "x", "y", "z"]]
+    molecule = molecule.sort_values(by=['Type','z'])
 
     molecule.index = range(1, len(molecule) + 1)
 
