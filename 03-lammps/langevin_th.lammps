@@ -105,9 +105,6 @@ fix nverun move nve
 fix hot  heater langevin ${Thot}  ${Thot}  0.04 123  tally yes
 fix cold cooler langevin ${Tcold} ${Tcold} 0.04 1234 tally yes
 
-# Temperature difference
-fix tempave all ave/time 100 100 10000 c_hTemp c_cTemp file reservoir_temps.dat
-
 thermo_style custom step c_hTemp c_cTemp c_bTemp c_mTemp c_sTemp f_hot f_cold
 thermo 1000
 
@@ -115,7 +112,7 @@ thermo 1000
 dump nvexyz all xyz 1000 AuSC10HS_nve.xyz
 dump_modify nvexyz element Au Au Au S C H
 
-# Kinetic energies for plotting temperature profile
+# Kinetic energies for temperature profile
 compute cke all ke/atom
 dump kedump all custom 1000 AuSC10HS_ke.dump id type c_cke
 
