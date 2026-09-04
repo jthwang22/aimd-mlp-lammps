@@ -98,8 +98,7 @@ PAO.BasisSize   DZP
 # Exchange-Correlation functional
 XC.Functional GGA
 XC.Authors    PBE
-DFTD3.Compute T
-DFTD3.UseXCDefaults T
+DFTD3 T
 
 #Real space grid
 MeshCutoff 125.0 Ry
