@@ -1,334 +1,155 @@
 #!/usr/bin/env python3
 """
-Process multiple SIESTA AIMD trajectories into a single output to be read by dpdata for DeePMD-kit training data.
+Process SIESTA AIMD trajectories into DeePMD training and validation datasets.
 
-Procedure:
-1. Crop the final MD frame from the first trajectory, then crop the first MD frame from the subsequent trajectories.
-    For restarted trajectories:
-        - The first restart chunk has its first MD frame removed
-        - All non-final restart chunks have their final MD frame removed
-        - Restart chunks are concatenated before downsampling
-2. Downsample MD trajectories with given stride.
-3. Concatenate all trajectories into single output file.
-
-Usage example:
-
-python aimd_process.py ./Raw_Folder/ ./processed_system.out --stride 10
-
+This script discovers trajectory output files via glob, drops the initial 
+shared configuration frame, applies downsampling via a stride, splits the 
+data into a 90/10 train/validation ratio per trajectory, and exports them 
+into DeepMD-kit compatible formats using a unified global type map.
 """
 
-
-from pathlib import Path
-from typing import List
-from collections import defaultdict
 import argparse
 import logging
-import re
-
-
-def is_restart_file(path: Path) -> bool:
-    """
-    Match files such as:
-
-    300K_1.out
-    300K_2.out
-    """
-
-    return re.search(r"_\d+\.out$", path.name) is not None
-
-
-def get_restart_info(path: Path) -> tuple[str, int] | None:
-
-    match = re.match(r"(.+?)_(\d+)\.out$", path.name)
-
-    if match is None:
-        return None
-
-    return (match.group(1), int(match.group(2)))
-
-
-def has_later_restart(file_path: Path, all_files) -> bool:
-
-    info = get_restart_info(file_path)
-
-    if info is None:
-        return False
-
-    prefix, chunk = info
-
-    for other in all_files:
-
-        other_info = get_restart_info(other)
-
-        if other_info is None:
-            continue
-
-        other_prefix, other_chunk = (other_info)
-
-        if (other_prefix == prefix and other_chunk > chunk):
-            return True
-
-    return False
-
-
-def remove_first_md_frame(lines: List[str]) -> List[str]:
-    """
-    Remove the first MD frame and
-    start at the second MD frame.
-    """
-
-    md_count = 0
-
-    for idx, line in enumerate(lines):
-
-        if line.strip().startswith("Begin MD step"):
-
-            md_count += 1
-
-            if md_count == 2:
-                return lines[idx:]
-
-    raise ValueError(
-        "File contains fewer than two MD steps."
-    )
-
-
-def remove_last_md_frame(lines: List[str]) -> List[str]:
-    """
-    Remove the final MD frame.
-    """
-
-    md_indices = []
-
-    for idx, line in enumerate(lines):
-        if line.strip().startswith("Begin MD step"):
-            md_indices.append(idx)
-
-    if len(md_indices) < 2:
-        raise ValueError(
-            "Need at least two MD steps to remove the last frame."
-        )
-
-    # Start of final frame
-    last_frame_start = md_indices[-1]
-
-    return lines[:last_frame_start]
-
-
-def downsample_lines(lines: List[str], stride: int) -> List[str]:
-    """
-    Keep every nth MD frame.
-    """
-
-    output_lines = []
-
-    current_frame = []
-    frame_index = -1
-
-    inside_frame = False
-    found_first_frame = False
-
-    for line in lines:
-
-        if line.strip().startswith("Begin MD step"):
-
-            if not found_first_frame:
-                found_first_frame = True
-
-                # Preserve header before first MD step
-                output_lines.extend(current_frame)
-                current_frame = []
-
-            if inside_frame:
-
-                if frame_index % stride == 0:
-                    output_lines.extend(current_frame)
-
-                current_frame = []
-
-            frame_index += 1
-            inside_frame = True
-
-        if not found_first_frame:
-            current_frame.append(line)
-
-        elif inside_frame:
-            current_frame.append(line)
-
-    # Handle final frame
-
-    if (
-        current_frame
-        and found_first_frame
-        and frame_index % stride == 0
-    ):
-        output_lines.extend(current_frame)
-
-    return output_lines
-
-
-def process_folder(
-    input_dir: Path,
-    output_file: Path,
-    stride: int
-) -> None:
-    """
-    Process all .out files and write a single
-    concatenated trajectory.
-    """
-
-    out_files = sorted(input_dir.glob("*.out"))
-
-    if not out_files:
-        raise FileNotFoundError(
-            f"No .out files found in {input_dir}"
-        )
-
-    logging.info(
-        "Found %d files.",
-        len(out_files)
-    )
-    
-    total_frames = 0
-
-    trajectory_groups = defaultdict(list)
-
-    with output_file.open("w", encoding="utf-8") as outfile:
-
-        for file_path in out_files:
-
-            info = get_restart_info(file_path)
-
-            if info is None:
-
-                trajectory_groups[file_path.stem].append(file_path)
-
-            else:
-
-                prefix, chunk = info
-
-                trajectory_groups[prefix].append(file_path)
-
-        for files in trajectory_groups.values():
-
-            files.sort(
-                key=lambda p:
-                get_restart_info(p)[1]
-                if get_restart_info(p)
-                else 0
-            )
-
-        regular_file_count = 0
-
-        for trajectory_name in sorted(trajectory_groups):
-
-            group_files = trajectory_groups[trajectory_name]
-
-            combined_lines = []
-
-            for file_path in group_files:
-
-                with file_path.open("r", encoding="utf-8") as f:
-
-                    lines = f.readlines()
-
-                if is_restart_file(file_path):
-
-                    _, chunk = (get_restart_info(file_path))
-
-                    if chunk == 1:
-
-                        lines = (remove_first_md_frame(lines))
-
-                    if has_later_restart(file_path,group_files):
-
-                        lines = (remove_last_md_frame(lines))
-
-                else:
-
-                    if regular_file_count == 0:
-
-                        lines = (remove_last_md_frame(lines))
-
-                    else:
-
-                        lines = (remove_first_md_frame(lines))
-
-                    regular_file_count += 1
-
-                combined_lines.extend(lines)
-
-                logging.info(
-                    "Added %s to %s",
-                    file_path.name,
-                    trajectory_name
-                )
-
-            processed_lines = (downsample_lines(combined_lines, stride))
-
-            frame_count = sum(
-                1
-                for line in processed_lines
-                if line.strip().startswith(
-                    "Begin MD step"
-                )
-            )
-
-            total_frames += frame_count
-
-            outfile.writelines(processed_lines)
-
-    logging.info(
-        "Created combined trajectory: %s",
-        output_file
-    )
-
-    logging.info(
-        "Total MD frames in combined trajectory: %d",
-        total_frames
-    )
-
-
-def main():
-
+from glob import glob
+import os
+import numpy as np
+import dpdata
+
+# Configure logging format
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(levelname)s] %(asctime)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
+logger = logging.getLogger(__name__)
+
+# Define a single, unified type map across all systems
+GLOBAL_TYPE_MAP = ["C", "H", "F", "Cl", "Br", "I"]
+
+
+def parse_arguments() -> argparse.Namespace:
+    """Parse command-line arguments for flexibility."""
     parser = argparse.ArgumentParser(
-        description=(
-            "Crop, downsample, and concatenate "
-            "SIESTA AIMD output files."
-        )
+        description="Process SIESTA AIMD outputs for DeePMD training."
     )
-
     parser.add_argument(
-        "input_dir",
-        type=Path,
-        help="Directory containing raw .out files"
+        "--pattern",
+        type=str,
+        default="./output/*.out",
+        help="Glob pattern to find trajectory output files (default: './output/*.out')."
     )
-
-    parser.add_argument(
-        "output_file",
-        type=Path,
-        help="Combined output filename"
-    )
-
     parser.add_argument(
         "--stride",
         type=int,
-        default=10,
-        help="Keep every nth MD frame (default: 10)"
+        default=5,
+        help="Stride for frame-level downsampling (default: 5)."
     )
-
-    args = parser.parse_args()
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(levelname)s: %(message)s"
+    parser.add_argument(
+        "--val-split",
+        type=float,
+        default=0.1,
+        help="Fraction of frames to allocate for validation (default: 0.1)."
     )
-
-    process_folder(
-        args.input_dir,
-        args.output_file,
-        args.stride
+    parser.add_argument(
+        "--train-dir",
+        type=str,
+        default="training_data",
+        help="Output directory for training data."
     )
+    parser.add_argument(
+        "--val-dir",
+        type=str,
+        default="validation_data",
+        help="Output directory for validation data."
+    )
+    return parser.parse_args()
+
+
+def process_trajectories(
+    file_pattern: str, 
+    stride: int, 
+    val_split: float
+) -> tuple[dpdata.MultiSystems, dpdata.MultiSystems]:
+    """
+    Load trajectories, drop first frame, downsample, and split into train/val.
+    """
+    train_ms = dpdata.MultiSystems()
+    val_ms = dpdata.MultiSystems()
+
+    files = glob(file_pattern)
+    logger.info(f"Found {len(files)} matching trajectory files using pattern: {file_pattern}")
+
+    if not files:
+        logger.warning("No files found. Please check your path or glob pattern.")
+        return train_ms, val_ms
+
+    for fpath in files:
+        try:
+            # Load trajectory with the global type map
+            ls = dpdata.LabeledSystem(fpath, fmt="siesta/aimd_output", type_map=GLOBAL_TYPE_MAP)
+            n_frames_orig = len(ls)
+            
+            if n_frames_orig <= 1:
+                logger.warning(f"Skipping {fpath}: Insufficient frames ({n_frames_orig}).")
+                continue
+                
+            # 1. Drop the first frame (index 0) to remove shared starting geometry
+            ls = ls.sub_system(np.arange(1, n_frames_orig))
+            n_frames_sliced = len(ls)
+            
+            # 2. Downsample using stride
+            ds_indices = np.arange(0, n_frames_sliced, stride)
+            ls_ds = ls.sub_system(ds_indices)
+            n_frames_ds = len(ls_ds)
+            
+            # 3. Random split based on validation fraction
+            n_val = max(1, int(val_split * n_frames_ds))
+            val_indices = np.random.choice(n_frames_ds, size=n_val, replace=False)
+            train_indices = np.setdiff1d(np.arange(n_frames_ds), val_indices)
+            
+            ls_train = ls_ds.sub_system(train_indices)
+            ls_val = ls_ds.sub_system(val_indices)
+            
+            # Append to MultiSystems containers
+            train_ms.append(ls_train)
+            val_ms.append(ls_val)
+            
+            logger.info(
+                f"Successfully processed {fpath} | "
+                f"Orig: {n_frames_orig} -> Sliced -> Downsampled: {n_frames_ds} "
+                f"(Train: {len(train_indices)}, Val: {len(val_indices)})"
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to process {fpath}: {e}")
+
+    return train_ms, val_ms
+
+
+def main() -> None:
+    args = parse_arguments()
+    
+    logger.info("Starting DeePMD dataset preparation pipeline...")
+    logger.info(f"Using Global Type Map: {GLOBAL_TYPE_MAP}")
+    
+    # Process the data
+    train_ms, val_ms = process_trajectories(
+        file_pattern=args.pattern,
+        stride=args.stride,
+        val_split=args.val_split
+    )
+    
+    # Export datasets if populated
+    if len(train_ms.systems) > 0:
+        logger.info(f"Exporting training data to '{args.train_dir}'...")
+        train_ms.to("deepmd/npy", args.train_dir)
+        
+        logger.info(f"Exporting validation data to '{args.val_dir}'...")
+        val_ms.to("deepmd/npy", args.val_dir)
+        
+        logger.info("Pipeline completed successfully!")
+    else:
+        logger.error("No valid systems found. Skipping export.")
 
 
 if __name__ == "__main__":
